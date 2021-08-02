@@ -29,22 +29,21 @@ shinyServer(function(input, output, session) {
     
     tableData <- reactive({
         if(input$Subset){
-            varlist1 <- input$var1
-            if("Status" %in% varlist1){
-                varlist1[[which.max("Status" == varlist1 )]] <- 6:11
+            varlist1 <- as.numeric(input$var1)
+            if(6 %in% varlist1){
+                varlist1 <- c(varlist1,7:11)
             }
-            if("Amount" %in% varlist1){
-                varlist1[[which.max("Amount" == varlist1 )]] <- 18:23
+            if(12 %in% varlist1){
+                varlist1 <- c(varlist1,13:17)
             }
-            if("Bill" %in% varlist1){
-                varlist1[[which.max("Bill" == varlist1 )]] <- 12:17
+            if(18 %in% varlist1){
+                varlist1 <- c(varlist1,19:23)
             }
-            varlist1 <- c(as.numeric(unlist(varlist1)),24)
-            tableData <- Credit %>% select(varlist1)
+            tableData <- Credit %>% select(varlist1,24)
         } else tableData <- Credit
-        if(input$Def){
+        if(input$Filter){
             tableData <- tableData %>% filter(DEFAULT %in% input$Def) 
-        } 
+        } else tableData <- tableData
     })
     
     output$table <- renderDataTable({
@@ -52,7 +51,13 @@ shinyServer(function(input, output, session) {
                       options = list(scrollX = TRUE))
     })
 
- 
+    output$downloadData <- downloadHandler(
+        filename = function() { 
+            paste("CreditDefaultSubset-", Sys.Date(), ".csv", sep="")
+        },
+        content = function(file) {
+            write.csv(tableData(), file)
+        })
     
     
     

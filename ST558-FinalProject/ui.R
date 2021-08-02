@@ -52,7 +52,7 @@ shinyUI(navbarPage("ST558 Final Project",
                    tabPanel("Data",
                             sidebarLayout(
                               sidebarPanel(
-                                checkboxInput("Subset", "Select a Subset?"),
+                                checkboxInput("Subset", strong("Select a Subset?")),
                                 
                                 conditionalPanel(
                                   condition = "input.Subset",
@@ -66,33 +66,27 @@ shinyUI(navbarPage("ST558 Final Project",
                                                           "Past Payment Amount",
                                                           "Bill Statement History"
                                                           ),
-                                              choiceValues = list(1, 
+                                              choiceValues = c(1, 
                                                                2, 
                                                                3,
                                                                4,
                                                                5,
-                                                               'Status',
-                                                               'Amount',
-                                                               'Bill'
+                                                               6,
+                                                               12,
+                                                               18
                                                                ),
-                                              selected = c("Credit Limit", 
-                                                           "Gender", 
-                                                           "Education",
-                                                           "Marriage",
-                                                           "Age",
-                                                           "Past Payment Status",
-                                                           "Past Payment Amount",
-                                                           "Bill Statement History"
-                                              )
+                                              selected = c(1:24)
                                   )
                                 ),
-                                checkboxInput("Filter", "Filter Data?"),
+                                checkboxInput("Filter", strong("Filter Default?")),
                                 
                                 conditionalPanel(
                                   condition = "input.Filter",
                                   selectInput(inputId = "Def", label = "Default", 
                                               choices = c("Yes", "No"))
-                                )
+                                ),
+                                
+                                downloadButton('downloadData', 'Download data')
                               ),
                                 
                                 

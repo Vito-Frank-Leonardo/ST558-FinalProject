@@ -19,29 +19,6 @@ dim(Credit)
 
 ##### Data 
 
-temp <- list('1', 
-             '2', 
-             '3',
-             '4',
-             '5',
-             "Amount",
-             "Bill")
-
-
-varlist1 <- temp
-if("Status" %in% varlist1){
-  varlist1[[which.max("Status" == varlist1 )]] <- 6:11
-}
-if("Amount" %in% varlist1){
-  varlist1[[which.max("Amount" == varlist1 )]] <- 18:23
-}
-if("Bill" %in% varlist1){
-  varlist1[[which.max("Bill" == varlist1 )]] <- 12:17
-}
-varlist1 <- c(as.numeric(unlist(varlist1)),24)
-varlist1
-
-list[list == "Status"]
 
 
 ##### Code for Data Visualization
