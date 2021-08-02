@@ -1,5 +1,7 @@
-About this project! 
+## Purpose of the Project
 
-Decription of Stuff!
+The purpose of this project is to create an interactive R Shiny app that allows users to work through the Data Science process without implementing any R code. Each tab represents a different stage in the Data Science process. The *About* tab provides information about the project and its source. The *Data* tab allows the user to scroll through, subset, and/or download the data. The *Data Exploration* tab allows the user to create numerical and graphical summaries to further explore the data. The *Modeling* page allows the user to fit 3 learning models to the data: Logistic Regression, Classification Tree, and a Random Forest Model. The *Modeling* section has 3 subtabs: *Modeling Info*, *Model Fitting*, and *Prediction*. The *Model Info* tab explains the three modeling approaches, the benefits of each, and the drawbacks of each. The *Model Fitting* tab allows users to fit the models and choose the model settings. It also displays the fit statistics for each model. The *Prediction* tab allows users to use one of the models for prediction by inputting values of predictors and returning a prediction for the response. 
 
-Discussion of models!
+## The Data
+
+The data in this project comes from the [https://archive.ics.uci.edu/ml/index.php](UCI Machine Learning Repository). The data set is called **Default of Credit Card Clients**. The goal of this dataset is to predict whether or not a person will default on credit card payments based on a variety of factors. The predictors are the amount of given credit, gender, education, age, marital status, and 17 variables measuring the history of past payments. Credit scoring is a popular data science application in the financial services industry. More information about the dataset (and a link to download it) can be found [https://archive.ics.uci.edu/ml/datasets/default+of+credit+card+clients#](here).
