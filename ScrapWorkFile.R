@@ -100,9 +100,9 @@ prune.testMiss <- 1- sum(pruneFit.pred.test==Credit.Train$DEFAULT, na.rm=T)/leng
 ### User choose k
 library(caret)
 k <- 5
-min.mtry <- 1
-max.mtry <- 20
-tuning <- data.frame(mtry = min.mtry:max.mtry)
+
+p <- ncol(Credit.Train)-1
+tuning <- data.frame(mtry = c(sqrt(p),p/3,1:5))
 rfFit <- train(DEFAULT ~ ., data = Credit.Train, method ="rf",trControl = trainControl(method="cv", number=k), tuneGrid = tuning)
 
 rfFit
