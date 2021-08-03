@@ -12,6 +12,7 @@ library(markdown)
 library(tidyverse)
 library(readxl)
 library(DT)
+library(plotly)
 
 Credit <- read_excel(path = "default of credit card clients.xls",
                      col_names = TRUE, 
