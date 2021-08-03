@@ -12,8 +12,7 @@ library(tidyverse)
 library(readxl)
 library(ggcorrplot)
 library(plotly)
-library(webshot)
-#install_phantomjs(force=TRUE)
+
 
 Credit <- read_excel(path = "default of credit card clients.xls",
                      col_names = TRUE, 
