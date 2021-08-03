@@ -144,7 +144,7 @@ shinyServer(function(input, output, session) {
         ### CART
         treeFit <- tree(DEFAULT~.,
                         data=select(Credit.Train,input$CARTpred, DEFAULT))
-        if(input$prune == "Yes"){
+        if(input$Prune == 'Yes'){
             pruneFit <- cv.tree(treeFit, FUN = prune.misclass)
             best <- pruneFit$size[which.min(pruneFit$dev)]
             treeFit <- prune.misclass(treeFit, best = best)
@@ -187,6 +187,10 @@ shinyServer(function(input, output, session) {
     })
     
     glm.sum <- eventReactive(input$fit, {
+        p <- input$train
+        Train <- sample(1:nrow(Credit), p*nrow(Credit))
+        Credit.Train <- Credit[Train,]
+        Credit.Test <- Credit[-Train,]
         glm.fit <- glm(DEFAULT ~ ., 
                        Credit.Train %>% select(input$LogistPred, DEFAULT), 
                        family = binomial)
@@ -201,6 +205,10 @@ shinyServer(function(input, output, session) {
     })
     
     treeFit <- eventReactive(input$fit, {
+        p <- input$train
+        Train <- sample(1:nrow(Credit), p*nrow(Credit))
+        Credit.Train <- Credit[Train,]
+        Credit.Test <- Credit[-Train,]
         treeFit <- tree(DEFAULT~.,
                         data=select(Credit.Train,input$CARTpred, DEFAULT))
         if(input$Prune == 'Yes'){
@@ -216,6 +224,10 @@ shinyServer(function(input, output, session) {
     
     
     rfFit <- eventReactive(input$fit, {
+        p <- input$train
+        Train <- sample(1:nrow(Credit), p*nrow(Credit))
+        Credit.Train <- Credit[Train,]
+        Credit.Test <- Credit[-Train,]
         if(input$CV == 'Yes'){
             k <- input$k
             mtry <- 1:input$Maxmtry
@@ -233,5 +245,97 @@ shinyServer(function(input, output, session) {
     output$RF <- renderPrint({
         print(rfFit())
     })
+    
+    Prediction <- eventReactive(input$Predict,{
+        p <- input$train
+        Train <- sample(1:nrow(Credit), p*nrow(Credit))
+        Credit.Train <- Credit[Train,]
+        Credit.Test <- Credit[-Train,]
+        
+        ### GLM
+        glm.fit <- glm(DEFAULT ~ ., 
+                       Credit.Train %>% select(input$LogistPred, DEFAULT), 
+                       family = binomial)
+        if(input$step== 'Yes'){
+            glm.fit <- MASS::stepAIC(glm.fit, direction = "both", trace = FALSE)
+        }
+
+        threshold <- input$threshold
+
+        
+        ### CART
+        treeFit <- tree(DEFAULT~.,
+                        data=select(Credit.Train,input$CARTpred, DEFAULT))
+        if(input$Prune == 'Yes'){
+            pruneFit <- cv.tree(treeFit, FUN = prune.misclass)
+            best <- pruneFit$size[which.min(pruneFit$dev)]
+            treeFit <- prune.misclass(treeFit, best = best)
+        }
+        treeFit.summ <- summary(treeFit)
+        treeFit.Miss.train <- treeFit.summ$misclass[1]/treeFit.summ$misclass[2]
+        treeFit.pred.test <- predict(treeFit, newdata = Credit.Test %>% 
+                                         select(-DEFAULT), type = "class")
+        treeFit.Miss.test <- 1- 
+            sum(treeFit.pred.test==Credit.Test$DEFAULT, na.rm=T)/length(Credit.Test$DEFAULT)
+        
+        ### RF
+        
+        if(input$CV == 'Yes'){
+            k <- input$k
+            mtry <- 1:input$Maxmtry
+            tuning <- data.frame(mtry = mtry)
+            rfFit <- train(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT), 
+                           method ="rf",trControl = trainControl(method="cv", number=k), 
+                           tuneGrid = tuning)
+            rfFit <- rfFit$finalModel
+        } else { 
+            rfFit <- randomForest(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT),
+                                  mtry = input$M, ntree = 200, importance = TRUE)
+        }
+        rf.trainMiss <- mean(rfFit$err.rate[,1])
+        rfPred <- predict(rfFit, newdata = Credit.Test %>% select(input$RFpred,DEFAULT))
+        rf.testMiss <- 1- sum(rfPred==Credit.Test$DEFAULT, na.rm=T)/
+            length(Credit.Test$DEFAULT)
+        
+        NewData <- data.frame(LIMIT_BAL = input$LIMIT_BAL,
+                              SEX = factor(input$SEX),
+                              EDUCATION = factor(input$EDUCATION), 
+                              MARRIAGE = factor(input$MARRIAGE),
+                              AGE = input$AGE ,
+                              PAY_0 = as.numeric(input$PAY_0) ,
+                              PAY_2 = as.numeric(input$PAY_2) ,
+                              PAY_3 = as.numeric(input$PAY_3) ,
+                              PAY_4 = as.numeric(input$PAY_4) ,
+                              PAY_5 = as.numeric(input$PAY_5),
+                              PAY_6 = as.numeric(input$PAY_6), 
+                              BILL_AMT1= input$BILL_AMT1,
+                              BILL_AMT2= input$BILL_AMT2,
+                              BILL_AMT3= input$BILL_AMT3,
+                              BILL_AMT4= input$BILL_AMT4,
+                              BILL_AMT5= input$BILL_AMT5,
+                              BILL_AMT6= input$BILL_AMT6,
+                              PAY_AMT1= input$PAY_AMT1,
+                              PAY_AMT2= input$PAY_AMT2,
+                              PAY_AMT3= input$PAY_AMT3, 
+                              PAY_AMT4= input$PAY_AMT4,
+                              PAY_AMT5= input$PAY_AMT5,
+                              PAY_AMT6= input$PAY_AMT6,
+                              DEFAULT= 0)
+
+        if(input$model == 1) {
+            glm.prob.test <- predict(glm.fit, type = "response", newdata = NewData)
+            glm.pred.test <- ifelse(glm.prob.test>threshold, 1, 0)
+            data.frame(Default = factor(glm.pred.test, levels=c(1,0), labels = c("Yes","No")))
+        } else if(input$model == 2){
+            data.frame(Default = treeFit.pred.test <- predict(treeFit, newdata = NewData, type = "class"))
+        } else{
+            data.frame(Default = predict(rfFit, newdata = NewData))
+        }
+    })
+    
+    output$predict <- renderTable({
+        Prediction()
+    })
+    
     
 })
