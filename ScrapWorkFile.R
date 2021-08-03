@@ -13,6 +13,7 @@ Credit <- read_excel(path = "default of credit card clients.xls",
                            labels = c('Married', 'Single', 'Others'))) %>%
   select(-ID) %>% drop_na()
 
+
 attach(Credit)
 str(Credit)
 dim(Credit)
@@ -25,6 +26,8 @@ dim(Credit)
 
 #Numerical Summary 1 with categorical variables
 table(DEFAULT, SEX)
+
+data.frame(table(Credit[[24]], Credit[[2]]))
 
 # Plot 1
 ggplot(data = Credit, mapping = aes(x = DEFAULT, y = LIMIT_BAL, fill = DEFAULT))+
@@ -76,11 +79,12 @@ choiceValues = c("LIMIT_BAL",
 Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 
 #Numerical Summary 2
-Credit.Numeric %>%  
+Credit.Numeric %>% 
+  select("PAY_AMT1","PAY_AMT2") %>%
   apply(MARGIN= 2,FUN = summary) %>%
-  round(1) %>%
-  kable(caption = paste0("Summary of Numeric Predictors", species),
-        row.names = TRUE)
+  round(1) 
+attach(Credit)
+table("DEFAULT")
 
 library(corrplot)
 corrplot( cor(Credit.Numeric))

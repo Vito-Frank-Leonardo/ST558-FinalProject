@@ -26,6 +26,7 @@ Credit <- read_excel(path = "default of credit card clients.xls",
            MARRIAGE = factor(MARRIAGE, levels = c(1,2,3), 
                              labels = c('Married', 'Single', 'Others'))) %>%
     select(-ID) %>% drop_na()
+Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 
 
 # Define server logic required to draw a histogram
@@ -106,6 +107,19 @@ shinyServer(function(input, output, session) {
                                   mode = 'markers',
                                   marker = list(size = 2))
         }
-    })   
-
+    })
+    
+    
+    SumTable <- reactive({
+        if(input$Sum == 1){
+            Credit.Numeric %>% 
+                select(input$varSumm) %>%
+                apply(MARGIN= 2,FUN = summary) %>%
+                round(1) 
+        } else data.frame(table(Credit[[which.max(names(Credit)==input$varTab1)]], 
+                                Credit[[which.max(names(Credit)==input$varTab2)]]))
+    })
+    output$summary <- renderDataTable({
+        datatable(SumTable(), options = list(scrollX = TRUE))
+    })
 })

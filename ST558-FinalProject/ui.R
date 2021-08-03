@@ -24,6 +24,8 @@ Credit <- read_excel(path = "default of credit card clients.xls",
          MARRIAGE = factor(MARRIAGE, levels = c(1,2,3), 
                            labels = c('Married', 'Single', 'Others'))) %>%
   select(-ID) %>% drop_na()
+Credit.Numeric <- Credit %>% select(c(1,5,6:23))
+Credit.Cat <- Credit %>% select(c(2:4,24))
 
 # Define UI for application that draws a histogram
 shinyUI(navbarPage("ST558 Final Project",
@@ -187,7 +189,37 @@ shinyUI(navbarPage("ST558 Final Project",
                                 )
                               ),
                               
-                              downloadButton('downloadPlot', 'Download Plot')
+                              downloadButton('downloadPlot', 'Download Plot'),
+                              
+                              radioButtons(inputId = "Sum", label = h2("Select the Summary Type"), 
+                                           choiceNames = c("Quantitative Summary",
+                                                           "Contingency Table"),
+                                           choiceValues = c(1,2)),
+                              
+                              conditionalPanel(
+                                condition = "input.Sum == '1'",
+                                selectizeInput(inputId = "varSumm", 
+                                            label = "Variable to Summarize", 
+                                            choices = names(Credit.Numeric),
+                                            multiple = TRUE,
+                                            selected = names(Credit.Numeric)
+                                )
+                              ),
+                              conditionalPanel(
+                                condition = "input.Sum == '2'",
+                                selectInput(inputId = "varTab1", 
+                                            label = "Variable 1 to Tabulate", 
+                                            choices = names(Credit.Cat),
+                                            selected = "DEFAULT"
+                                ),
+                                selectInput(inputId = "varTab2", 
+                                            label = "Variable 2 to Tabulate", 
+                                            choices = names(Credit.Cat)
+                                            ,
+                                            selected = "SEX")
+                              )
+                              
+                              
                             ),
                             
                             mainPanel(
