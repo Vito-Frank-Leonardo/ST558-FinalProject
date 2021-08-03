@@ -1,3 +1,4 @@
+# librarying packages
 library(shiny)
 library(markdown)
 library(tidyverse)
@@ -5,6 +6,7 @@ library(readxl)
 library(DT)
 library(plotly)
 
+# Importing dataset
 Credit <- read_excel(path = "default of credit card clients.xls",
                      col_names = TRUE, 
                      skip=1) %>% 
@@ -19,18 +21,20 @@ Credit <- read_excel(path = "default of credit card clients.xls",
 Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 Credit.Cat <- Credit %>% select(c(2:4,24))
 
-# Define UI for application that draws a histogram
+# Define UI for application
 shinyUI(navbarPage("ST558 Final Project",
                    
                    
                    
-############################ About #############################################                   
+###################################### About #############################################         
                    
                    tabPanel("About",
                             fluidRow(
+                              # outputting about
                                 column(6,
                                        includeMarkdown("about.md")
                                 ),
+                                # outputting picture
                                 column(3,
                                        img(src="creditriskcollage.jpg",
                                            width = 510,
@@ -40,7 +44,7 @@ shinyUI(navbarPage("ST558 Final Project",
                             ),
                    
                    
-############################# Data ################################################                   
+####################################### Data ################################################     
                    
                    
                    tabPanel("Data",
@@ -92,18 +96,22 @@ shinyUI(navbarPage("ST558 Final Project",
                    
                    
                    
-############################ Data Exploration ################################################                   
+#################################### Data Exploration ####################################      
                    
                    
                    tabPanel("Data Exploration",
                             sidebarLayout(
                             sidebarPanel(
                               
+                              
+                              # Side Bar inputs
                               radioButtons(inputId = "Type", label = h2("Select the Plot Type"), 
                                            choiceNames = c("Correlation Plot of Numeric Predictors",
                                                            "Boxplot",
                                                            "3d Scatterplot"),
                                            choiceValues = c(1,2,3)),
+                              
+                              
                               
                               conditionalPanel(
                                 condition = "input.Type == '1'",
@@ -125,6 +133,8 @@ shinyUI(navbarPage("ST558 Final Project",
                                                   )
                               ),
                               
+                              
+                              
                               conditionalPanel(
                                 condition = "input.Type == '2'",
                                 radioButtons(inputId = "varPlot2X", 
@@ -141,7 +151,7 @@ shinyUI(navbarPage("ST558 Final Project",
                                                    ),
                                                    selected = "DEFAULT"
                                 ),
-                                radioButtons(inputId = "varPlot2Y", 
+                                  radioButtons(inputId = "varPlot2Y", 
                                                    label = "Y Axis", 
                                                    choiceNames = c("Credit Limit",
                                                                    "Age",
@@ -158,6 +168,8 @@ shinyUI(navbarPage("ST558 Final Project",
                                                    selected = c("LIMIT_BAL")
                                 )
                               ),
+                              
+                              
                               
                               conditionalPanel(
                                 condition = "input.Type == '3'",
@@ -181,12 +193,24 @@ shinyUI(navbarPage("ST558 Final Project",
                                 )
                               ),
                               
+                              
+                              
+                              
+                              
                               downloadButton('downloadPlot', 'Download Plot'),
+                              
+                              
+                              
+                              
                               
                               radioButtons(inputId = "Sum", label = h2("Select the Summary Type"), 
                                            choiceNames = c("Quantitative Summary",
                                                            "Contingency Table"),
                                            choiceValues = c(1,2)),
+                              
+                              
+                              
+                              
                               
                               conditionalPanel(
                                 condition = "input.Sum == '1'",
@@ -200,6 +224,8 @@ shinyUI(navbarPage("ST558 Final Project",
                                             multiple = TRUE,
                                             selected = names(Credit.Numeric))
                                 ),
+                              
+                              
                               
                                 conditionalPanel(
                                 condition = "input.Sum == '2'",
@@ -217,9 +243,13 @@ shinyUI(navbarPage("ST558 Final Project",
                               
                             ),
                             
+                            
+                            
+                            # Main Panel
                             mainPanel(
                               plotlyOutput("plot"),
                               dataTableOutput("summary"),
+                              #Javascript for plot download button
                               tags$script('
                   document.getElementById("downloadPlot").onclick = function() {
                   var plot = $("#selectplot").val();
@@ -245,9 +275,11 @@ shinyUI(navbarPage("ST558 Final Project",
                    
                    
                    
-##############################  Modeling ###########################################                   
+#########################################  Modeling ###########################################  
                    
                    navbarMenu("Modeling",
+                              
+                              #Explaining the models
                               tabPanel("Modeling Info",
                                        h2("Logistic Regression"),
                                        "Logistic Regressions is a popular generalized linear model approach that allows for a binary response. This makes the model incredibly useful for classification. Instead of predicting the response, the logistic regression predicts the log odds of success for the given binary response. From the predicted log odds of success, we can estimate the probability of success.",
@@ -265,7 +297,7 @@ shinyUI(navbarPage("ST558 Final Project",
                                        ),
                               
                               
-                              
+                              # Inputting the inputs for model fitting
                               tabPanel("Model Fitting",
                                        sidebarLayout(
                                          sidebarPanel(
@@ -331,6 +363,11 @@ shinyUI(navbarPage("ST558 Final Project",
                                           verbatimTextOutput("RF")
                                         )
                                        )),
+                              
+                              
+                              
+                              
+                              # Inputting the predictors for prediction
                               tabPanel("Prediction",
                                        sidebarLayout(
                                          sidebarPanel(

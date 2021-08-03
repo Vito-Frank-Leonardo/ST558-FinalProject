@@ -1,3 +1,4 @@
+# librarying packages
 library(shiny)
 library(tidyverse)
 library(readxl)
@@ -8,7 +9,7 @@ library(caret)
 library(randomForest)
 library(DT)
 
-
+# Importing Dataset
 Credit <- read_excel(path = "default of credit card clients.xls",
                      col_names = TRUE, 
                      skip=1) %>% 
@@ -22,9 +23,10 @@ Credit <- read_excel(path = "default of credit card clients.xls",
 Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 
 
-# Define server logic required to draw a histogram
+# Define server logic required to create project
 shinyServer(function(input, output, session) {
     
+    # Reactive Table for Data Section
     tableData <- reactive({
         if(input$Subset){
             varlist1 <- as.numeric(input$var1)
@@ -44,11 +46,13 @@ shinyServer(function(input, output, session) {
         } else tableData <- tableData
     })
     
+    # Output Table for Data Section
     output$data <- renderDataTable({
         datatable(tableData(),
                       options = list(scrollX = TRUE))
     })
-
+    
+    # Output Data for the Data Download Button
     output$downloadData <- downloadHandler(
         filename = function() { 
             paste("CreditDefaultSubset-", Sys.Date(), ".csv", sep="")
@@ -57,6 +61,7 @@ shinyServer(function(input, output, session) {
             write.csv(tableData(), file)
         })
     
+    # Create a numbers represented columns of dataset based on user input
     CorrPlotVar <- reactive({
             varlist2 <- as.numeric(input$varPlot1)
             if(6 %in% varlist2){
@@ -72,15 +77,15 @@ shinyServer(function(input, output, session) {
     })
     
     
-    
+    # Create a plot based on user input
     output$plot <- renderPlotly({
         if(input$Type == 1){
-            
+            # interactive correlation plot
             ggplotly( ggcorrplot( cor(Credit %>% select(CorrPlotVar()) ), 
                                   hc.order = TRUE, type = "lower", outline.col = "white"))
             
         } else if(input$Type == 2){
-            
+            # interactive bar plot
             ggplotly(ggplot(data = Credit, 
                             mapping = aes_string(x = input$varPlot2X, 
                                                  y = input$varPlot2Y, 
@@ -91,6 +96,7 @@ shinyServer(function(input, output, session) {
                                              input$varPlot2Y )))
             
         } else{
+            # 3d scatter plot
             plot_ly ( data = Credit,
                                   x = ~get(input$varPlot3X),
                                   y = ~get(input$varPlot3Y),
@@ -102,7 +108,7 @@ shinyServer(function(input, output, session) {
         }
     })
     
-    
+    # Create a table of numeric summaries based on user input
     SumTable <- reactive({
         if(input$Sum == 1){
             Credit.Numeric %>% 
@@ -112,10 +118,13 @@ shinyServer(function(input, output, session) {
         } else data.frame(table(Credit[[which.max(names(Credit)==input$varTab1)]], 
                                 Credit[[which.max(names(Credit)==input$varTab2)]]))
     })
+    
+    # Output table of numeric summaries
     output$summary <- renderDataTable({
         datatable(SumTable(), options = list(scrollX = TRUE))
     })
     
+    # Output the fit results based on user input
     FitResults <- eventReactive(input$fit, {
         p <- input$train
         Train <- sample(1:nrow(Credit), p*nrow(Credit))
@@ -182,10 +191,12 @@ shinyServer(function(input, output, session) {
         
     })
     
+    # Output fit statistics from model fits
     output$Fits <- renderDataTable({
         FitResults()
     })
     
+    # Get logistic regression summary from user input
     glm.sum <- eventReactive(input$fit, {
         p <- input$train
         Train <- sample(1:nrow(Credit), p*nrow(Credit))
@@ -200,10 +211,12 @@ shinyServer(function(input, output, session) {
         glm.sum <- summary(glm.fit)
     })
     
+    # Output logistic regression summary
     output$Logistic <- renderPrint({
         print(glm.sum())
     })
     
+    # Get classification tree summary from user input
     treeFit <- eventReactive(input$fit, {
         p <- input$train
         Train <- sample(1:nrow(Credit), p*nrow(Credit))
@@ -218,11 +231,13 @@ shinyServer(function(input, output, session) {
         }
         treeFit.summ <- summary(treeFit)
     })
+    
+    # output classification tree summary
     output$CART <- renderPrint({
         print(treeFit())
     })
     
-    
+    # Get random forest summary from user input
     rfFit <- eventReactive(input$fit, {
         p <- input$train
         Train <- sample(1:nrow(Credit), p*nrow(Credit))
@@ -242,10 +257,12 @@ shinyServer(function(input, output, session) {
         }
     })
     
+    # output random forest summary
     output$RF <- renderPrint({
         print(rfFit())
     })
     
+    # Get prediction based on user input
     Prediction <- eventReactive(input$Predict,{
         p <- input$train
         Train <- sample(1:nrow(Credit), p*nrow(Credit))
@@ -333,6 +350,7 @@ shinyServer(function(input, output, session) {
         }
     })
     
+    # Output prediction
     output$predict <- renderTable({
         Prediction()
     })
