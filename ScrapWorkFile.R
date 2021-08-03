@@ -1,3 +1,6 @@
+shiny::runGitHub("Vito-Frank-Leonardo/ST558-FinalProject", ref = "main")
+
+
 library(tidyverse)
 library(readxl)
 
@@ -152,10 +155,19 @@ prune.testMiss <- 1- sum(pruneFit.pred.test==Credit.Train$DEFAULT, na.rm=T)/leng
 ##### Random Forest
 ### User choose k
 library(caret)
-k <- 5
+k <- 1
 
 p <- ncol(Credit.Train)-1
-tuning <- data.frame(mtry = c(sqrt(p),p/3,1:5))
-rfFit <- train(DEFAULT ~ ., data = Credit.Train, method ="rf",trControl = trainControl(method="cv", number=k), tuneGrid = tuning)
+tuning <- data.frame(mtry = 1:9)
+rfFit <- train(DEFAULT ~ ., data = Credit.Train, method ="rf",trControl = trainControl(method="cv", number=2), tuneGrid = tuning)
 
 rfFit
+
+
+
+
+
+data.frame(Logistic = c(glm.trainMiss, glm.testMiss),
+           DecisionTree = c(treeFit.Miss.train, treeFit.Miss.test),
+           RandomForest = c(rf.trainMiss, rf.testMiss),
+           row.names = c("Training Misclassification Rate", "Test Misclassification Rate"))

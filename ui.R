@@ -1,12 +1,3 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(markdown)
 library(tidyverse)
@@ -199,14 +190,18 @@ shinyUI(navbarPage("ST558 Final Project",
                               
                               conditionalPanel(
                                 condition = "input.Sum == '1'",
+                                numericInput(inputId = "Digits", 
+                                             label = "Select the number of digits for rounding",
+                                             value = 2)
+                                ,
                                 selectizeInput(inputId = "varSumm", 
                                             label = "Variable to Summarize", 
                                             choices = names(Credit.Numeric),
                                             multiple = TRUE,
-                                            selected = names(Credit.Numeric)
-                                )
-                              ),
-                              conditionalPanel(
+                                            selected = names(Credit.Numeric))
+                                ),
+                              
+                                conditionalPanel(
                                 condition = "input.Sum == '2'",
                                 selectInput(inputId = "varTab1", 
                                             label = "Variable 1 to Tabulate", 
@@ -219,7 +214,6 @@ shinyUI(navbarPage("ST558 Final Project",
                                             ,
                                             selected = "SEX")
                               )
-                              
                               
                             ),
                             
@@ -254,7 +248,75 @@ shinyUI(navbarPage("ST558 Final Project",
 ##############################  Modeling ###########################################                   
                    
                    navbarMenu("Modeling",
-                              tabPanel("Modeling Info"),
-                              tabPanel("Model Fitting"),
+                              tabPanel("Modeling Info",
+                                       h2("Logistic Regression"),
+                                       ),
+                              
+                              
+                              
+                              tabPanel("Model Fitting",
+                                       sidebarLayout(
+                                         sidebarPanel(
+                                          numericInput("train", 
+                                                       label = "Proportion of Data In Training Set",
+                                                       value = 0.8, min = 0.1, max = .99 ),
+                                          h2("Logistic Regression"),
+                                          selectizeInput(inputId = "LogistPred", 
+                                                         label = "Predictors for Logistic Model", 
+                                                         choices = names(Credit %>% select(-DEFAULT)),
+                                                         multiple = TRUE,
+                                                         selected = names(Credit %>% select(-DEFAULT))),
+                                          numericInput("threshold",
+                                                       "Threshold Probability For Classification",
+                                                       value = 0.5, min = 0.1, max = .99),
+                                          selectInput(inputId = "step",
+                                                      label = "Use Stepwise Predictor Selection After Fitting?",
+                                                      choices = c("Yes", "No"),
+                                                      selected = "No"),
+                                          h2("Decision Tree"), 
+                                          selectizeInput(inputId = "CARTpred", 
+                                                         label = "Predictors for Decision Tree", 
+                                                         choices = names(Credit %>% select(-DEFAULT)),
+                                                         multiple = TRUE,
+                                                         selected = names(Credit %>% select(-DEFAULT))),
+                                          selectInput(inputId = "Prune",
+                                                      label = "Prune the Tree After Fitting?",
+                                                      choices = c("Yes", "No"),
+                                                      selected = "No"),
+                                          h2("Random Forest"),
+                                          selectizeInput(inputId = "RFpred", 
+                                                         label = "Predictors for Random Forest", 
+                                                         choices = names(Credit %>% select(-DEFAULT)),
+                                                         multiple = TRUE,
+                                                         selected = names(Credit %>% select(-DEFAULT))),
+                                          selectInput(inputId = "CV",
+                                                      label = "Use K-fold CV to find best m?",
+                                                      choices = c("Yes", "No")),
+                                          conditionalPanel(condition = "input.CV == 'Yes'",
+                                                           numericInput(inputId = "Maxmtry",
+                                                                        label = "Choose Max Mtry",
+                                                                        value = 8, min = 2, max = 15),
+                                                           numericInput(inputId = "k",
+                                                                        label = "K?",
+                                                                        value = 5, min = 2, max = 10)),
+                                          conditionalPanel(condition = "input.CV == 'No'",
+                                                           numericInput(inputId = "M",
+                                                                        label = "Choose M",
+                                                                        value = 5, min = 2, max = 15))
+                                          ,
+                                          actionButton("fit", "Fit The Models!")
+                                          
+                                         ),
+                                        mainPanel(
+                                          h2("Fit Statistics"),
+                                          dataTableOutput("Fits"),
+                                          h2("Logistic Regression Summary Output"),
+                                          verbatimTextOutput("Logistic"),
+                                          h2("Decision Tree Summary Output"),
+                                          verbatimTextOutput("CART"),
+                                          h2("Random Forest Summary Output"),
+                                          verbatimTextOutput("RF")
+                                        )
+                                       )),
                               tabPanel("Prediction"))
 ))

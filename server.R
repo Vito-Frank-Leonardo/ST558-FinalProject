@@ -1,17 +1,12 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(tidyverse)
 library(readxl)
 library(ggcorrplot)
 library(plotly)
+library(tree)
+library(caret)
+library(randomForest)
+library(DT)
 
 
 Credit <- read_excel(path = "default of credit card clients.xls",
@@ -23,8 +18,7 @@ Credit <- read_excel(path = "default of credit card clients.xls",
            EDUCATION = factor(EDUCATION, levels = c(1,2,3,4), 
                               labels = c('Graduate School', 'University', 'High School', 'others')),
            MARRIAGE = factor(MARRIAGE, levels = c(1,2,3), 
-                             labels = c('Married', 'Single', 'Others'))) %>%
-    select(-ID) %>% drop_na()
+                             labels = c('Married', 'Single', 'Others'))) %>%  select(-ID) %>% drop_na()
 Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 
 
@@ -114,11 +108,130 @@ shinyServer(function(input, output, session) {
             Credit.Numeric %>% 
                 select(input$varSumm) %>%
                 apply(MARGIN= 2,FUN = summary) %>%
-                round(1) 
+                round(input$Digits) 
         } else data.frame(table(Credit[[which.max(names(Credit)==input$varTab1)]], 
                                 Credit[[which.max(names(Credit)==input$varTab2)]]))
     })
     output$summary <- renderDataTable({
         datatable(SumTable(), options = list(scrollX = TRUE))
     })
+    
+    FitResults <- eventReactive(input$fit, {
+        p <- input$train
+        Train <- sample(1:nrow(Credit), p*nrow(Credit))
+        Credit.Train <- Credit[Train,]
+        Credit.Test <- Credit[-Train,]
+        
+        ### GLM
+        glm.fit <- glm(DEFAULT ~ ., 
+                       Credit.Train %>% select(input$LogistPred, DEFAULT), 
+                       family = binomial)
+        if(input$step== 'Yes'){
+            glm.fit <- MASS::stepAIC(glm.fit, direction = "both", trace = FALSE)
+        }
+        glm.sum <- summary(glm.fit)
+        threshold <- input$threshold
+        glm.prob.train <- predict(glm.fit, type = "response", newdata = Credit.Train)
+        glm.pred.train <- ifelse(glm.prob.train>threshold, 1, 0)
+        glm.pred.train <- factor(glm.pred.train, levels=c(1,0), labels = c("Yes","No"))
+        glm.trainMiss <- sum(glm.pred.train==Credit.Train$DEFAULT, na.rm=T)/length(Credit.Train$DEFAULT)
+        
+        glm.prob.test <- predict(glm.fit, type = "response", newdata = Credit.Test)
+        glm.pred.test <- ifelse(glm.prob.test>threshold, 1, 0)
+        glm.pred.test <- factor(glm.pred.test, levels=c(1,0), labels = c("Yes","No"))
+        glm.testMiss <- sum(glm.pred.test==Credit.Test$DEFAULT, na.rm=T)/length(Credit.Test$DEFAULT)
+        
+        ### CART
+        treeFit <- tree(DEFAULT~.,
+                        data=select(Credit.Train,input$CARTpred, DEFAULT))
+        if(input$prune == "Yes"){
+            pruneFit <- cv.tree(treeFit, FUN = prune.misclass)
+            best <- pruneFit$size[which.min(pruneFit$dev)]
+            treeFit <- prune.misclass(treeFit, best = best)
+        }
+        treeFit.summ <- summary(treeFit)
+        treeFit.Miss.train <- treeFit.summ$misclass[1]/treeFit.summ$misclass[2]
+        treeFit.pred.test <- predict(treeFit, newdata = Credit.Test %>% 
+                                         select(-DEFAULT), type = "class")
+        treeFit.Miss.test <- 1- 
+            sum(treeFit.pred.test==Credit.Test$DEFAULT, na.rm=T)/length(Credit.Test$DEFAULT)
+        
+        ### RF
+        
+        if(input$CV == 'Yes'){
+            k <- input$k
+            mtry <- 1:input$Maxmtry
+            tuning <- data.frame(mtry = mtry)
+            rfFit <- train(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT), 
+                           method ="rf",trControl = trainControl(method="cv", number=k), 
+                           tuneGrid = tuning)
+            rfFit <- rfFit$finalModel
+        } else { 
+            rfFit <- randomForest(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT),
+                                  mtry = input$M, ntree = 200, importance = TRUE)
+        }
+        rf.trainMiss <- mean(rfFit$err.rate[,1])
+        rfPred <- predict(rfFit, newdata = Credit.Test %>% select(input$RFpred,DEFAULT))
+        rf.testMiss <- 1- sum(rfPred==Credit.Test$DEFAULT, na.rm=T)/
+            length(Credit.Test$DEFAULT)
+        
+        data.frame(Logistic = round(c(glm.trainMiss, glm.testMiss),4),
+                   DecisionTree = round(c(treeFit.Miss.train, treeFit.Miss.test),4),
+                   RandomForest = round(c(rf.trainMiss, rf.testMiss),4),
+                   row.names = c("Training Misclassification Rate", "Test Misclassification Rate"))
+        
+    })
+    
+    output$Fits <- renderDataTable({
+        FitResults()
+    })
+    
+    glm.sum <- eventReactive(input$fit, {
+        glm.fit <- glm(DEFAULT ~ ., 
+                       Credit.Train %>% select(input$LogistPred, DEFAULT), 
+                       family = binomial)
+        if(input$step== 'Yes'){
+            glm.fit <- MASS::stepAIC(glm.fit, direction = "both", trace = FALSE)
+        }
+        glm.sum <- summary(glm.fit)
+    })
+    
+    output$Logistic <- renderPrint({
+        print(glm.sum())
+    })
+    
+    treeFit <- eventReactive(input$fit, {
+        treeFit <- tree(DEFAULT~.,
+                        data=select(Credit.Train,input$CARTpred, DEFAULT))
+        if(input$Prune == 'Yes'){
+            pruneFit <- cv.tree(treeFit, FUN = prune.misclass)
+            best <- pruneFit$size[which.min(pruneFit$dev)]
+            treeFit <- prune.misclass(treeFit, best = best)
+        }
+        treeFit.summ <- summary(treeFit)
+    })
+    output$CART <- renderPrint({
+        print(treeFit())
+    })
+    
+    
+    rfFit <- eventReactive(input$fit, {
+        if(input$CV == 'Yes'){
+            k <- input$k
+            mtry <- 1:input$Maxmtry
+            tuning <- data.frame(mtry = mtry)
+            rfFit <- train(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT), 
+                           method ="rf",trControl = trainControl(method="cv", number=k), 
+                           tuneGrid = tuning)
+            rfFit <- rfFit$finalModel
+        } else { 
+            rfFit <- randomForest(DEFAULT ~ ., data = Credit.Train %>% select(input$RFpred,DEFAULT),
+                                  mtry = input$M, ntree = 200, importance = TRUE)
+        }
+    })
+    
+    output$RF <- renderPrint({
+        print(rfFit())
+    })
+    
 })
