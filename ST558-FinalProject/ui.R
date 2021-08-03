@@ -30,7 +30,7 @@ shinyUI(navbarPage("ST558 Final Project",
                    
                    
                    
-                   
+############################ About #############################################                   
                    
                    tabPanel("About",
                             fluidRow(
@@ -46,7 +46,7 @@ shinyUI(navbarPage("ST558 Final Project",
                             ),
                    
                    
-                   
+############################# Data ################################################                   
                    
                    
                    tabPanel("Data",
@@ -91,17 +91,135 @@ shinyUI(navbarPage("ST558 Final Project",
                                 
                                 
                               mainPanel(
-                                dataTableOutput("table")
+                                dataTableOutput("data")
                               )
                             )
                    ),
                    
                    
                    
+############################ Data Exploration ################################################                   
+                   
+                   
+                   tabPanel("Data Exploration",
+                            sidebarLayout(
+                            sidebarPanel(
+                              
+                              radioButtons(inputId = "Type", label = h2("Select the Plot Type"), 
+                                           choiceNames = c("Correlation Plot of Numeric Predictors",
+                                                           "Boxplot",
+                                                           "3d Scatterplot"),
+                                           choiceValues = c(1,2,3)),
+                              
+                              conditionalPanel(
+                                condition = "input.Type == '1'",
+                                checkboxGroupInput(inputId = "varPlot1", 
+                                                   label = "Correlation Plot Variables", 
+                                                   choiceNames = c("Credit Limit",
+                                                                 "Age",
+                                                                 "Past Payment Status",
+                                                                 "Past Payment Amount",
+                                                                 "Bill Statement History"
+                                                  ),
+                                                  choiceValues = c(1, 
+                                                                  5,
+                                                                  6,
+                                                                  12,
+                                                                  18
+                                                  ),
+                                                  selected = c(1,5,6:23)
+                                                  )
+                              ),
+                              
+                              conditionalPanel(
+                                condition = "input.Type == '2'",
+                                radioButtons(inputId = "varPlot2X", 
+                                                   label = "X Axis", 
+                                                   choiceNames = c("Default",
+                                                                   "Sex",
+                                                                   "Education",
+                                                                   "Marriage"
+                                                                   ),
+                                                   choiceValues = c("DEFAULT", 
+                                                                    "SEX",
+                                                                    "EDUCATION",
+                                                                    "MARRIAGE"
+                                                   ),
+                                                   selected = "DEFAULT"
+                                ),
+                                radioButtons(inputId = "varPlot2Y", 
+                                                   label = "Y Axis", 
+                                                   choiceNames = c("Credit Limit",
+                                                                   "Age",
+                                                                   "Payment History",
+                                                                   "Bill Amount",
+                                                                   "Payment Amount"
+                                                   ),
+                                                   choiceValues = c("LIMIT_BAL", 
+                                                                    "AGE",
+                                                                    "PAY_0",
+                                                                    "BILL_AMT1",
+                                                                    "PAY_AMT1"
+                                                   ),
+                                                   selected = c("LIMIT_BAL")
+                                )
+                              ),
+                              
+                              conditionalPanel(
+                                condition = "input.Type == '3'",
+                                selectInput(inputId = "varPlot3X", 
+                                                   label = "Scatterplot Variable X", 
+                                                   choices = names(Credit)
+                                                   ,
+                                                   selected = "DEFAULT"
+                                ),
+                                selectInput(inputId = "varPlot3Y", 
+                                            label = "Scatterplot Variable Y", 
+                                            choices = names(Credit)
+                                            ,
+                                            selected = "LIMIT_BAL"
+                                ),
+                                selectInput(inputId = "varPlot3Z", 
+                                            label = "Scatterplot Variable Z", 
+                                            choices = names(Credit)
+                                            ,
+                                            selected = "AGE"
+                                )
+                              ),
+                              
+                              downloadButton('downloadPlot', 'Download Plot')
+                            ),
+                            
+                            mainPanel(
+                              plotlyOutput("plot"),
+                              dataTableOutput("summary"),
+                              tags$script('
+                  document.getElementById("downloadPlot").onclick = function() {
+                  var plot = $("#selectplot").val();
+                  if(plot == "plot1"){
+                    var gd = document.getElementById("plot");
+                  }else{
+                    var gd = document.getElementById("plot");
+                  }
+                  Plotly.Snapshot.toImage(gd, {format: "png"}).once("success", function(url) {
+                    var a = window.document.createElement("a");
+                    a.href = url; 
+                    a.type = "image/png";
+                    a.download = "plot.png";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);                      
+                  });
+                  }
+                  ')
+                            )
+                   )
+                   ),
                    
                    
                    
-                   tabPanel("Data Exploration"),
+##############################  Modeling ###########################################                   
+                   
                    navbarMenu("Modeling",
                               tabPanel("Modeling Info"),
                               tabPanel("Model Fitting"),

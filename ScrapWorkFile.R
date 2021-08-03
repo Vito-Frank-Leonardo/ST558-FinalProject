@@ -31,7 +31,49 @@ ggplot(data = Credit, mapping = aes(x = DEFAULT, y = LIMIT_BAL, fill = DEFAULT))
   geom_boxplot()
 
   
-Credit.Numeric <- Credit %>% select(c(2,13:24))
+"Payment History 0",
+"Payment History 2",
+"Payment History 3",
+"Payment History 4",
+"Payment History 5",
+"Payment History 6",
+"Bill Amount 1",
+"Bill Amount 2",
+"Bill Amount 3",
+"Bill Amount 4",
+"Bill Amount 5",
+"Bill Amount 6",
+"Payment Amount 1",
+"Payment Amount 2",
+"Payment Amount 3",
+"Payment Amount 4",
+"Payment Amount 5",
+"Payment Amount 6"
+),
+choiceValues = c("LIMIT_BAL", 
+                 "AGE",
+                 "PAY_0",
+                 "PAY_2",
+                 "PAY_3",
+                 "PAY_4",
+                 "PAY_5",
+                 "PAY_6",
+                 "BILL_AMT1",
+                 "BILL_AMT2",
+                 "BILL_AMT3", 
+                 "BILL_AMT4",
+                 "BILL_AMT5",
+                 "BILL_AMT6",
+                 "PAY_AMT1",
+                 "PAY_AMT2",
+                 "PAY_AMT3",
+                 "PAY_AMT4",
+                 "PAY_AMT5",
+                 "PAY_AMT6"
+),
+
+
+Credit.Numeric <- Credit %>% select(c(1,5,6:23))
 
 #Numerical Summary 2
 Credit.Numeric %>%  
@@ -40,12 +82,16 @@ Credit.Numeric %>%
   kable(caption = paste0("Summary of Numeric Predictors", species),
         row.names = TRUE)
 
+library(corrplot)
+corrplot( cor(Credit.Numeric))
+
+
 library(plotly)
 plot_ly (
-  x = PAY_0,
-  y = AGE,
-  z = LIMIT_BAL,
-  color = ~DEFAULT, colors = c('red', 'blue'),
+  x = Credit$"PAY_0",
+  y = Credit$"AGE",
+  z = Credit$"LIMIT_BAL",
+  color = ~Credit$"DEFAULT", colors = c('red', 'blue'),
   type = 'scatter3d' ,
   mode = 'markers',
   marker = list(size = 2))
