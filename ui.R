@@ -250,11 +250,17 @@ shinyUI(navbarPage("ST558 Final Project",
                    navbarMenu("Modeling",
                               tabPanel("Modeling Info",
                                        h2("Logistic Regression"),
-                                       "Logistic Regressions is a popular general"
-                                       
-                                       
-                                       
-                                       
+                                       "Logistic Regressions is a popular generalized linear model approach that allows for a binary response. This makes the model incredibly useful for classification. Instead of predicting the response, the logistic regression predicts the log odds of success for the given binary response. From the predicted log odds of success, we can estimate the probability of success.",
+                                       withMathJax(),
+                                       helpText('The model is as follows: 
+                                       $$ log(\\frac{p(y)}{1-p(y)}) = \\beta X $$'),
+                                       helpText('So, 
+                                                $$ p(y) = \\frac{e^{\\beta X}}{1+e^{\\beta X}} $$'),
+                                       "We can use this for classification because we can classify observations with probabilities greater than 0.5 to success, and less then 0.5 to failure. The benefits of this approach is that the coefficients of the predictors are interpretted similarly to the linear model. Another benefit is that the model results in probabilities, not classifications. We can adjust the probability threshold for classification to whatever we see fit based on our data. A drawback of the logistic regression is that if the seperation between groups is nonlinear or almost perfect, the logistic regression has a hard time with classifying.",
+                                       h2("Classification Trees"),
+                                       "Classification Trees seperate the data into groups based on the Gini index or Deviance. They are incredibly useful because they are easy to visualize and interpret. They can be great tools for explaning relationships between predictors and the response to a non statistician. A drawback of trees are that they are highly variable. If your data set changes slightly, the entire tree can change and so can your predictions.",
+                                       h2("Random Forest"),
+                                       "Random Forests are a modification to the Classification Tree to reduce variance. The idea is that if we take a large amount of bootstrap samples from the data, fit many trees, then average their results, then we should reduce the variance and solve the problem of Classification trees. This is called bagging. However, if the bootstrap trees are correlated, then the reduction in variance we expect from averaging will not occur. This often happens when there are dominant predictors in a training set. The Random Forest solves this issue by choosing from a random subset of predictors at each node. This makes sure that dominant predictors cannot dominate the tree. This process gives enough randomness that the bootstrap trees usually are not correlated and thus, we get the reduction of variance that we wanted. A draw back of the Random Forest is that it requires a large amount of computational time. In the next tab, we fit all three of these models on the Credit Default data"
                                        
                                        ),
                               
